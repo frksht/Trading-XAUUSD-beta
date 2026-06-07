@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XAUUSD SMC — Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { font-size: 24px; margin-bottom: 4px; color: #f0f6fc; }
+    .subtitle { color: #8b949e; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+    .card h3 { font-size: 13px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .card .value { font-size: 28px; font-weight: 700; color: #f0f6fc; }
+    .card .value.green { color: #3fb950; }
+    .card .value.red { color: #f85149; }
+    .card .value.yellow { color: #d29922; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #21262d; font-size: 13px; }
+    th { color: #8b949e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { font-family: 'SF Mono', 'Cascadia Code', monospace; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge.long { background: #0d4429; color: #3fb950; }
+    .badge.short { background: #440d0d; color: #f85149; }
+    .badge.win { background: #0d4429; color: #3fb950; }
+    .badge.loss { background: #440d0d; color: #f85149; }
+    .badge.open { background: #1a2d44; color: #58a6ff; }
+    .status { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot.green { background: #3fb950; }
+    .dot.red { background: #f85149; }
+    .dot.yellow { background: #d29922; }
+    .empty { color: #8b949e; text-align: center; padding: 32px; font-style: italic; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>XAUUSD SMC Scalping</h1>
+    <p class="subtitle">Dashboard de performance — Smart Money Concepts</p>
+
+    <div class="status" id="status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Chargement...</span>
+    </div>
+
+    <div class="grid" id="statsGrid">
+      <div class="card"><h3>Total Trades</h3><div class="value" id="totalTrades">—</div></div>
+      <div class="card"><h3>Win Rate</h3><div class="value" id="winRate">—</div></div>
+      <div class="card"><h3>Wins</h3><div class="value green" id="wins">—</div></div>
+      <div class="card"><h3>Losses</h3><div class="value red" id="losses">—</div></div>
+      <div class="card"><h3>Avg R:R</h3><div class="value yellow" id="avgRR">—</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Derniers Trades</h3>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Direction</th><th>Entry</th><th>SL</th><th>TP</th><th>R:R</th><th>Confiance</th><th>P&L</th><th>Statut</th></tr>
+        </thead>
+        <tbody id="tradesBody">
+          <tr><td colspan="9" class="empty">Aucun trade enregistré.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    async function loadData() {
+      try {
+        const sessionResp = await fetch('../trades/logs/trades.ndjson?_t=' + Date.now());
+        if (!sessionResp.ok) throw new Error('Fichier non trouvé');
+
+        const text = await sessionResp.text();
+        const lines = text.trim().split('\n').filter(Boolean);
+        const trades = lines.map(l => JSON.parse(l));
+
+        updateStats(trades);
+        updateTable(trades);
+        setStatus(true);
+      } catch (e) {
+        setStatus(false, e.message);
+      }
+    }
+
+    function updateStats(trades) {
+      const total = trades.length;
+      const wins = trades.filter(t => t.pnl > 0).length;
+      const losses = total - wins;
+      const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : '0.0';
+      const avgRR = total > 0 ? (trades.reduce((s, t) => s + (t.risk_reward || 0), 0) / total).toFixed(2) : '—';
+
+      document.getElementById('totalTrades').textContent = total;
+      document.getElementById('winRate').textContent = winRate + '%';
+      document.getElementById('wins').textContent = wins;
+      document.getElementById('losses').textContent = losses;
+      document.getElementById('avgRR').textContent = avgRR;
+    }
+
+    function updateTable(trades) {
+      const body = document.getElementById('tradesBody');
+      if (trades.length === 0) {
+        body.innerHTML = '<tr><td colspan="9" class="empty">Aucun trade enregistré.</td></tr>';
+        return;
+      }
+
+      const recent = trades.slice(-20).reverse();
+      body.innerHTML = recent.map(t => {
+        const dirBadge = t.direction === 'long' ? 'badge long' : 'badge short';
+        const pnlClass = t.pnl > 0 ? 'green' : t.pnl < 0 ? 'red' : '';
+        const statusBadge = t.status === 'open' ? 'badge open' : (t.pnl > 0 ? 'badge win' : 'badge loss');
+        const pnlDisplay = t.pnl !== null ? `<span class="${pnlClass}">${t.pnl > 0 ? '+' : ''}${t.pnl}</span>` : '—';
+        const dirDisplay = t.direction === 'long' ? 'LONG' : 'SHORT';
+
+        return `<tr>
+          <td>${new Date(t.timestamp).toLocaleDateString('fr-FR')}</td>
+          <td><span class="${dirBadge}">${dirDisplay}</span></td>
+          <td>${t.entry || '—'}</td>
+          <td>${t.stop_loss || '—'}</td>
+          <td>${t.take_profit_1 || '—'}</td>
+          <td>1:${t.risk_reward || '—'}</td>
+          <td>${t.confidence || '—'}</td>
+          <td>${pnlDisplay}</td>
+          <td><span class="${statusBadge}">${t.status}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function setStatus(ok, msg) {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      if (ok) {
+        dot.className = 'dot green';
+        text.textContent = 'Système opérationnel';
+      } else {
+        dot.className = 'dot red';
+        text.textContent = 'Erreur : ' + (msg || 'Impossible de charger les données');
+      }
+    }
+
+    loadData();
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>

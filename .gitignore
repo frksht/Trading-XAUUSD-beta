@@ -1,0 +1,8 @@
+node_modules/
+.opencode/
+screenshots/
+trades/logs/
+scripts/current.pine
+temp_*
+*.log
+discovery-log.json

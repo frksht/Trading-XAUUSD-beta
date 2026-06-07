@@ -1,0 +1,115 @@
+{
+  "asset": "XAUUSD",
+  "strategy": "SMC Scalping — Smart Money Concepts",
+
+  "watchlist": {
+    "primary": ["OANDA:XAUUSD", "TVC:GOLD"],
+    "macro_filters": [
+      "TVC:DXY",
+      "TVC:US10Y",
+      "ECONOMICS:USINTR",
+      "CAPITALCOM:CPI_USFED"
+    ]
+  },
+
+  "timeframes": {
+    "bias":         "1H",
+    "key_zones":    "30M",
+    "confirmation": "15M",
+    "execution":    "5M"
+  },
+
+  "higher_timeframe_context": {
+    "trend_timeframes": ["1H", "30M"],
+    "tasks": [
+      "Determine market trend on 1H and 30M",
+      "Identify major support and resistance levels",
+      "Mark premium zones (above equilibrium) and discount zones (below equilibrium)",
+      "Identify external liquidity (swing highs/lows) and internal liquidity (FVGs, order blocks)",
+      "Determine market condition: bullish, bearish, or ranging"
+    ]
+  },
+
+  "market_structure": {
+    "concepts": ["BOS", "CHOCH", "MSS"],
+    "primary_entry_confirmation": "MSS",
+    "tasks": [
+      "Identify all BOS (Break of Structure) on 15M and 30M",
+      "Identify all CHOCH (Change of Character)",
+      "Identify MSS (Market Structure Shift) — this is the primary entry trigger",
+      "Report the most recent MSS and its direction (bullish or bearish)"
+    ]
+  },
+
+  "liquidity_analysis": {
+    "tasks": [
+      "Identify buy-side liquidity (equal highs, highs above key levels)",
+      "Identify sell-side liquidity (equal lows, lows below key levels)",
+      "Determine whether liquidity has already been swept on each timeframe",
+      "Estimate the next most probable liquidity target"
+    ]
+  },
+
+  "entry_model": {
+    "long_setup": [
+      "1. Sell-side liquidity sweep",
+      "2. Bullish MSS on 15M",
+      "3. Bullish FVG or Bullish Order Block identified",
+      "4. Entry on retracement into FVG or Order Block",
+      "5. Minimum Risk/Reward ratio = 1:2"
+    ],
+    "short_setup": [
+      "1. Buy-side liquidity sweep",
+      "2. Bearish MSS on 15M",
+      "3. Bearish FVG or Bearish Order Block identified",
+      "4. Entry on retracement into FVG or Order Block",
+      "5. Minimum Risk/Reward ratio = 1:2"
+    ]
+  },
+
+  "indicators": [
+    "50 EMA",
+    "200 EMA",
+    "RSI (14)",
+    "Volume"
+  ],
+
+  "risk_rules": {
+    "max_risk_per_trade": "1% of portfolio",
+    "min_rr_ratio": 2,
+    "no_trades_during": [
+      "NFP (Non-Farm Payrolls)",
+      "CPI release",
+      "Core PCE release",
+      "FOMC meeting",
+      "Fed Press Conference",
+      "Any high-impact USD or XAU news within 30 minutes"
+    ],
+    "news_block_rule": "If a high-impact news event is scheduled within the next 30 minutes, return: NO TRADE — HIGH IMPACT NEWS RISK."
+  },
+
+  "macro_filter": {
+    "check_before_every_trade": [
+      "NFP",
+      "CPI",
+      "Core PCE",
+      "FOMC",
+      "Fed Press Conference",
+      "DXY direction and momentum",
+      "US10Y Treasury Yield trend"
+    ],
+    "dxy_rule": "If DXY is strongly bullish, bias XAUUSD bearish. If DXY is weakening, bias XAUUSD bullish.",
+    "us10y_rule": "Rising US10Y yields are bearish pressure on Gold. Falling yields support Gold."
+  },
+
+  "output_format": {
+    "required_sections": [
+      "BIAS: Bullish / Bearish / Neutral",
+      "LIQUIDITY: { buy_side_liquidity, sell_side_liquidity, last_liquidity_sweep }",
+      "MARKET_STRUCTURE: { BOS, CHOCH, MSS }",
+      "TRADE_SETUP: { direction, entry, stop_loss, take_profit_1, take_profit_2, risk_reward }",
+      "CONFIDENCE: Low / Medium / High",
+      "REASONING: concise explanation based on liquidity, MSS, market structure, DXY, and macro conditions"
+    ]
+  }
+}
